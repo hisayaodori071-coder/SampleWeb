@@ -209,7 +209,7 @@ body {
     opacity: 1;
 }
 
-/* 大きいボタン（出勤・退勤） */
+/* 出勤・退勤ボタン */
 .big-button {
     min-height: 180px;
     border-radius: 28px;
@@ -217,7 +217,7 @@ body {
     font-weight: 700;
 }
 
-/* 小さいボタン（休憩開始・休憩終了） */
+/* 休憩開始・休憩終了ボタン */
 .small-button {
     min-height: 58px;
     border-radius: 999px;
