@@ -91,6 +91,49 @@ body {
     letter-spacing: 0.04em;
 }
 
+/* 現在の状態表示カード */
+.status-card {
+    margin: 0 0 24px;
+    padding: 18px 28px;
+    background: #f8fbff;
+    border: 1px solid #d7eaf7;
+    border-radius: 18px;
+    text-align: center;
+    min-width: 260px;
+}
+
+/* 「現在の状態」という小見出し */
+.status-label {
+    margin: 0 0 8px;
+    font-size: 14px;
+    font-weight: 700;
+    color: #666;
+}
+
+/* 状態そのものの文字 */
+.status-value {
+    margin: 0;
+    font-size: 32px;
+    font-weight: 700;
+}
+
+/* 状態ごとの色 */
+.status-before {
+    color: #666;
+}
+
+.status-working {
+    color: #1d8fe1;
+}
+
+.status-break {
+    color: #f59e0b;
+}
+
+.status-finished {
+    color: #16a34a;
+}
+
 /* 打刻完了メッセージ */
 .message-area {
     margin-top: 24px;
@@ -308,6 +351,9 @@ body {
         font-size: 15px;
         min-height: 52px;
     }
+	.status-value {
+	    font-size: 26px;
+	}
 }
 
 /* かなり狭い画面ではボタンを1列にする */

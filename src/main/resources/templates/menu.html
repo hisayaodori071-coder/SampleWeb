@@ -43,6 +43,15 @@
 
                 <!-- 画面タイトル -->
                 <h1 class="screen-title">勤怠管理システム</h1>
+				
+				<div class="status-card">
+				    <p class="status-label">現在の状態</p>
+				    <p class="status-value"
+				       th:classappend="' ' + ${workStatusClass}"
+				       th:text="${workStatus}">
+				        勤務前
+				    </p>
+				</div>
 
                 <!-- JavaScriptで現在日時を1秒ごとに更新する -->
                 <div id="currentDateTime" class="current-date-time">読み込み中...</div>

@@ -42,20 +42,45 @@ public class MenuController {
         boolean breakEndDone = attendanceService.hasRecordedToday(loginId, "休憩終了");
         boolean endDone = attendanceService.hasRecordedToday(loginId, "退勤");
 
+        // 現在の勤務状態を判定する
+        String workStatus;
+        String workStatusClass;
+
+        if (endDone) {
+            // 退勤済みなら最優先でこの状態
+            workStatus = "退勤済み";
+            workStatusClass = "status-finished";
+        } else if (breakStartDone && !breakEndDone) {
+            // 休憩開始済み かつ 休憩終了前なら休憩中
+            workStatus = "休憩中";
+            workStatusClass = "status-break";
+        } else if (startDone) {
+            // 出勤済みで、休憩中でも退勤済みでもなければ勤務中
+            workStatus = "勤務中";
+            workStatusClass = "status-working";
+        } else {
+            // 出勤前
+            workStatus = "勤務前";
+            workStatusClass = "status-before";
+        }
+
         // 画面に表示する値を渡す
         model.addAttribute("loginId", loginId);
         model.addAttribute("displayName", testUserService.getDisplayName(loginId));
         model.addAttribute("records", attendanceService.getRecords(loginId));
 
-        // ボタンの活性 / 非活性判定に使う
+        // ボタンの活性/非活性判定に使う
         model.addAttribute("startDone", startDone);
         model.addAttribute("breakStartDone", breakStartDone);
         model.addAttribute("breakEndDone", breakEndDone);
         model.addAttribute("endDone", endDone);
 
+        // 現在の状態表示に使う
+        model.addAttribute("workStatus", workStatus);
+        model.addAttribute("workStatusClass", workStatusClass);
+
         return "menu";
     }
-
     @PostMapping("/attendance/start")
     public String start(HttpSession session, RedirectAttributes redirectAttributes) {
         return record(session, "出勤", "出勤を記録しました。", redirectAttributes);
