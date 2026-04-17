@@ -17,7 +17,7 @@ public class MenuController {
     // 打刻記録を管理するサービス
     private final AttendanceService attendanceService;
 
-    // ユーザー表示名などを扱うサービス
+    // ユーザー名表示に使うサービス
     private final TestUserService testUserService;
 
     public MenuController(AttendanceService attendanceService, TestUserService testUserService) {
@@ -27,7 +27,8 @@ public class MenuController {
 
     @GetMapping("/menu")
     public String view(Model model, HttpSession session) {
-        // セッションからログイン中ユーザーを取り出す
+
+        // ログイン中ユーザーを取得
         String loginId = (String) session.getAttribute("loginUser");
 
         // 未ログインならログイン画面へ戻す
@@ -35,22 +36,22 @@ public class MenuController {
             return "redirect:/login";
         }
 
-        // 今日すでに押したかどうかを調べる
+        // 今日すでに押したかどうかを判定
         boolean startDone = attendanceService.hasRecordedToday(loginId, "出勤");
-        boolean endDone = attendanceService.hasRecordedToday(loginId, "退勤");
         boolean breakStartDone = attendanceService.hasRecordedToday(loginId, "休憩開始");
         boolean breakEndDone = attendanceService.hasRecordedToday(loginId, "休憩終了");
+        boolean endDone = attendanceService.hasRecordedToday(loginId, "退勤");
 
-        // 画面に渡す値
+        // 画面に表示する値を渡す
         model.addAttribute("loginId", loginId);
         model.addAttribute("displayName", testUserService.getDisplayName(loginId));
         model.addAttribute("records", attendanceService.getRecords(loginId));
 
         // ボタンの活性 / 非活性判定に使う
         model.addAttribute("startDone", startDone);
-        model.addAttribute("endDone", endDone);
         model.addAttribute("breakStartDone", breakStartDone);
         model.addAttribute("breakEndDone", breakEndDone);
+        model.addAttribute("endDone", endDone);
 
         return "menu";
     }
@@ -77,35 +78,37 @@ public class MenuController {
 
     @GetMapping("/logout")
     public String logout(HttpSession session) {
-        // セッションを破棄してログイン状態を解除
+        // セッション破棄でログアウト
         session.invalidate();
         return "redirect:/login";
     }
 
     /**
      * 打刻の共通処理
-     * 
-     * 同じ日に同じ打刻を2回以上させない
+     *
+     * ここで順番チェックと重複チェックを行い同じ日に同じ打刻を2回以上させない
      */
     private String record(HttpSession session, String action, String successMessage,
             RedirectAttributes redirectAttributes) {
 
         String loginId = (String) session.getAttribute("loginUser");
 
-        // 未ログインならログイン画面へ
         if (loginId == null) {
             return "redirect:/login";
         }
 
-        // その日すでに同じ打刻をしていたら、再登録しない
-        if (attendanceService.hasRecordedToday(loginId, action)) {
-            redirectAttributes.addFlashAttribute("message", action + "は本日すでに記録済みです。");
+        // 順番や重複に問題があれば、記録せずに赤字メッセージを表示する
+        String errorMessage = attendanceService.validateActionOrder(loginId, action);
+        if (errorMessage != null) {
+            redirectAttributes.addFlashAttribute("message", errorMessage);
+            redirectAttributes.addFlashAttribute("messageType", "error");
             return "redirect:/menu";
         }
 
-        // 初回なら記録する
+        // 問題なければ記録する
         attendanceService.record(loginId, action);
         redirectAttributes.addFlashAttribute("message", successMessage);
+        redirectAttributes.addFlashAttribute("messageType", "success");
 
         return "redirect:/menu";
     }
