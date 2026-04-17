@@ -133,10 +133,30 @@ body {
 }
 
 /* ホバー時に少し浮かせる */
-.big-button:hover,
-.small-button:hover {
+.big-button:not(:disabled):hover,
+.small-button:not(:disabled):hover {
     transform: translateY(-2px);
     opacity: 0.95;
+}
+
+/* 無効化されたボタンの見た目 */
+.big-button:disabled,
+.small-button:disabled,
+.is-disabled {
+    background: #d9d9d9 !important;
+    color: #666 !important;
+    border: 2px solid #c8c8c8 !important;
+    cursor: not-allowed;
+    opacity: 1;
+    box-shadow: none;
+    transform: none;
+}
+
+/* 無効化時は hover しても動かさない */
+.big-button:disabled:hover,
+.small-button:disabled:hover {
+    transform: none;
+    opacity: 1;
 }
 
 /* 大きいボタン（出勤・退勤） */
@@ -221,7 +241,7 @@ body {
 
 /* 履歴の日時 */
 .history-time {
-    color: #d5d5d5;
+    color: #a9a9a9;
 }
 
 /* 履歴の種別 */

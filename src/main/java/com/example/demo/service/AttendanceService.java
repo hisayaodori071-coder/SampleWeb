@@ -1,5 +1,6 @@
 package com.example.demo.service;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -19,49 +20,64 @@ public class AttendanceService {
      * 
      * キー   : loginId
      * 値     : そのユーザーの打刻履歴一覧
-     * 
-     * 例
-     * user -> [出勤, 休憩開始, 休憩終了, 退勤]
      */
     private final Map<String, List<AttendanceRecord>> records = new ConcurrentHashMap<>();
 
     /**
-     * 打刻を記録するメソッド
-     * 
-     * loginId : ログイン中ユーザー
-     * action  : 出勤 / 退勤 / 休憩開始 / 休憩終了
+     * 打刻を記録する
      */
     public void record(String loginId, String action) {
-
-        // そのユーザーの履歴一覧を取得
-        // まだ存在しない場合は新しく作る
         List<AttendanceRecord> userRecords = records.computeIfAbsent(
                 loginId,
                 key -> Collections.synchronizedList(new ArrayList<>()));
 
-        // リスト操作を安全にするため同期化して追加
         synchronized (userRecords) {
-            // 新しい打刻を先頭に入れる
-            // 画面で新しい履歴が上に来るようにしている
+            // 新しい履歴を先頭に入れる
             userRecords.add(0, new AttendanceRecord(loginId, action, LocalDateTime.now()));
         }
     }
 
     /**
-     * 指定ユーザーの打刻履歴一覧を返す
+     * 指定ユーザーの打刻履歴を返す
      */
     public List<AttendanceRecord> getRecords(String loginId) {
-
         List<AttendanceRecord> userRecords = records.get(loginId);
 
-        // 履歴がまだ1件もない場合は空リストを返す
         if (userRecords == null) {
             return List.of();
         }
 
-        // 内部データを直接返さず、コピーした一覧を返す
         synchronized (userRecords) {
             return new ArrayList<>(userRecords);
         }
+    }
+
+    /**
+     * その日すでに同じ打刻が記録されているかを判定する
+     * 
+     * 例:
+     * - 今日すでに「出勤」を押していれば true
+     * - 今日まだ「退勤」を押していなければ false
+     */
+    public boolean hasRecordedToday(String loginId, String action) {
+        List<AttendanceRecord> userRecords = records.get(loginId);
+
+        if (userRecords == null) {
+            return false;
+        }
+
+        LocalDate today = LocalDate.now();
+
+        synchronized (userRecords) {
+            for (AttendanceRecord record : userRecords) {
+                // 「日付」と「打刻種別」の両方が一致したら、今日はすでに押していると判定
+                if (record.getRecordedAt().toLocalDate().equals(today)
+                        && record.getAction().equals(action)) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 }

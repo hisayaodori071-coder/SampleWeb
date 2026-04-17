@@ -57,25 +57,49 @@
                 <!-- 打刻ボタンエリア -->
                 <div class="button-grid">
 
-                    <!-- 出勤 -->
-                    <form th:action="@{/attendance/start}" method="post">
-                        <button type="submit" class="big-button primary">出勤</button>
-                    </form>
+					<!-- 出勤 -->
+					<form th:action="@{/attendance/start}" method="post">
+					    <button type="submit"
+					            class="big-button primary"
+					            th:disabled="${startDone}"
+					            th:classappend="${startDone} ? ' is-disabled' : ''"
+					            th:text="${startDone} ? '出勤済' : '出勤'">
+					        出勤
+					    </button>
+					</form>
 
-                    <!-- 退勤 -->
-                    <form th:action="@{/attendance/end}" method="post">
-                        <button type="submit" class="big-button secondary">退勤</button>
-                    </form>
+					<!-- 退勤 -->
+					<form th:action="@{/attendance/end}" method="post">
+					    <button type="submit"
+					            class="big-button secondary"
+					            th:disabled="${endDone}"
+					            th:classappend="${endDone} ? ' is-disabled' : ''"
+					            th:text="${endDone} ? '退勤済' : '退勤'">
+					        退勤
+					    </button>
+					</form>
 
-                    <!-- 休憩開始 -->
-                    <form th:action="@{/attendance/break-start}" method="post">
-                        <button type="submit" class="small-button primary-outline">休憩開始</button>
-                    </form>
+					<!-- 休憩開始 -->
+					<form th:action="@{/attendance/break-start}" method="post">
+					    <button type="submit"
+					            class="small-button primary-outline"
+					            th:disabled="${breakStartDone}"
+					            th:classappend="${breakStartDone} ? ' is-disabled' : ''"
+					            th:text="${breakStartDone} ? '休憩開始済' : '休憩開始'">
+					        休憩開始
+					    </button>
+					</form>
 
-                    <!-- 休憩終了 -->
-                    <form th:action="@{/attendance/break-end}" method="post">
-                        <button type="submit" class="small-button secondary-outline">休憩終了</button>
-                    </form>
+					<!-- 休憩終了 -->
+					<form th:action="@{/attendance/break-end}" method="post">
+					    <button type="submit"
+					            class="small-button secondary-outline"
+					            th:disabled="${breakEndDone}"
+					            th:classappend="${breakEndDone} ? ' is-disabled' : ''"
+					            th:text="${breakEndDone} ? '休憩終了済' : '休憩終了'">
+					        休憩終了
+					    </button>
+					</form>
                 </div>
 
                 <!-- 打刻履歴表示エリア -->
