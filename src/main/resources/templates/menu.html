@@ -1,10 +1,144 @@
 <!DOCTYPE html>
-<html>
+<html xmlns:th="http://www.thymeleaf.org">
 <head>
 <meta charset="UTF-8">
-<title>トップメニュー</title>
+
+<!-- ブラウザのタブに表示されるタイトル -->
+<title>勤怠管理</title>
+
+<!-- 勤怠画面用CSSを読み込む -->
+<link rel="stylesheet" th:href="@{/css/menu.css}">
 </head>
 <body>
+<<<<<<< HEAD
 トップメニュー。
+=======
+
+    <!-- 画面全体を横並びにするラッパー -->
+    <div class="app-layout">
+
+        <!-- 左側のサイドバー -->
+        <aside class="sidebar">
+
+            <!-- ホームアイコン。押すと /menu に戻る -->
+            <a class="side-icon home-icon" th:href="@{/menu}" aria-label="ホーム">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M12 3 3 10h2v10h6v-6h2v6h6V10h2z"/>
+                </svg>
+            </a>
+
+            <!-- ログアウトアイコン。押すと /logout に移動する -->
+            <a class="side-icon logout-icon" th:href="@{/logout}" aria-label="ログアウト">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M10 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h5v-2H5V5h5V3zm6.59 4.41L15.17 8.83 17.34 11H9v2h8.34l-2.17 2.17 1.42 1.42L21 12l-4.41-4.59z"/>
+                </svg>
+            </a>
+        </aside>
+
+        <!-- メインコンテンツ -->
+        <main class="main-content">
+
+            <!-- 中央エリア -->
+            <section class="center-panel">
+
+                <!-- ログイン中ユーザー名を表示 -->
+                <p class="welcome-text" th:text="'ようこそ、' + ${displayName} + 'さん'"></p>
+
+                <!-- 画面タイトル -->
+                <h1 class="screen-title">勤怠管理システム</h1>
+				
+				<div class="status-card">
+				    <p class="status-label">現在の状態</p>
+				    <p class="status-value"
+				       th:classappend="' ' + ${workStatusClass}"
+				       th:text="${workStatus}">
+				        勤務前
+				    </p>
+				</div>
+
+                <!-- JavaScriptで現在日時を1秒ごとに更新する -->
+                <div id="currentDateTime" class="current-date-time">読み込み中...</div>
+
+                <!-- 打刻後のメッセージ表示 -->
+				<div class="message-area"
+				     th:if="${message != null}"
+				     th:classappend="${messageType == 'error'} ? ' error' : ''"
+				     th:text="${message}">
+				</div>
+            </section>
+
+            <!-- 右側エリア -->
+            <section class="right-panel">
+
+                <!-- 打刻ボタンエリア -->
+				<div class="button-grid">
+
+				    <!-- 出勤 -->
+				    <form th:action="@{/attendance/start}" method="post">
+				        <button type="submit"
+				                class="big-button primary"
+				                th:disabled="${startDone}"
+				                th:classappend="${startDone} ? ' is-disabled' : ''"
+				                th:text="${startDone} ? '出勤済' : '出勤'">
+				            出勤
+				        </button>
+				    </form>
+
+				    <!-- 退勤 -->
+				    <form th:action="@{/attendance/end}" method="post">
+				        <button type="submit"
+				                class="big-button secondary"
+				                th:disabled="${endDone}"
+				                th:classappend="${endDone} ? ' is-disabled' : ''"
+				                th:text="${endDone} ? '退勤済' : '退勤'">
+				            退勤
+				        </button>
+				    </form>
+
+				    <!-- 休憩開始 -->
+				    <form th:action="@{/attendance/break-start}" method="post">
+				        <button type="submit"
+				                class="small-button primary-outline"
+				                th:disabled="${breakStartDone}"
+				                th:classappend="${breakStartDone} ? ' is-disabled' : ''"
+				                th:text="${breakStartDone} ? '休憩開始済' : '休憩開始'">
+				            休憩開始
+				        </button>
+				    </form>
+
+				    <!-- 休憩終了 -->
+				    <form th:action="@{/attendance/break-end}" method="post">
+				        <button type="submit"
+				                class="small-button secondary-outline"
+				                th:disabled="${breakEndDone}"
+				                th:classappend="${breakEndDone} ? ' is-disabled' : ''"
+				                th:text="${breakEndDone} ? '休憩終了済' : '休憩終了'">
+				            休憩終了
+				        </button>
+				    </form>
+				</div>
+
+                <!-- 打刻履歴表示エリア -->
+                <div class="history-card">
+                    <h2>打刻履歴</h2>
+
+                    <!-- records が空でないときは履歴一覧を表示 -->
+                    <ul class="history-list" th:if="${!#lists.isEmpty(records)}">
+                        <li th:each="record : ${records}">
+                            <span class="history-time" th:text="${record.recordedAtText}"></span>
+                            <span class="history-action" th:text="${record.action}"></span>
+                        </li>
+                    </ul>
+
+                    <!-- 履歴が1件もないときの表示 -->
+                    <p class="empty-text" th:if="${#lists.isEmpty(records)}">まだ打刻はありません。</p>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- 現在日時を更新するJavaScriptを読み込む -->
+    <script th:src="@{/js/menu.js}"></script>
+>>>>>>> refs/heads/勤怠ボタン（メインメニュー画面）の作成
 </body>
 </html>
