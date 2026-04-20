@@ -1,0 +1,290 @@
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    min-height: 100vh;
+    font-family: "Yu Gothic", "Meiryo", sans-serif;
+    background: #ffffff;
+    color: #222;
+}
+
+.app-layout {
+    display: flex;
+    min-height: 100vh;
+}
+
+.sidebar {
+    width: 88px;
+    background: #1aa0e6;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    padding: 24px 0;
+    flex-shrink: 0;
+}
+
+.sidebar-top {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 28px;
+}
+
+.side-icon {
+    width: 56px;
+    height: 56px;
+    color: #fff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    border-radius: 16px;
+    transition: background-color 0.2s, transform 0.15s;
+}
+
+.side-icon:hover {
+    background: rgba(255, 255, 255, 0.18);
+    transform: translateY(-1px);
+}
+
+.side-icon.active {
+    background: #0f7fb8;
+}
+
+.side-icon svg {
+    width: 42px;
+    height: 42px;
+    fill: currentColor;
+}
+
+.attendance-main {
+    flex: 1;
+    padding: 32px 40px;
+    overflow: hidden;
+}
+
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 24px;
+    margin-bottom: 18px;
+}
+
+.page-header h1 {
+    margin: 0;
+    font-size: 28px;
+    color: #222;
+    font-weight: 700;
+}
+
+.page-description {
+    margin: 8px 0 0;
+    color: #666;
+    font-size: 14px;
+}
+
+.month-select-form {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.month-select-form select {
+    height: 40px;
+    padding: 0 36px 0 12px;
+    border: 1px solid #cbd5e1;
+    border-radius: 10px;
+    background: #fff;
+    font-size: 15px;
+    cursor: pointer;
+}
+
+.empty-month-message {
+    margin: 0 0 14px;
+    padding: 12px 16px;
+    background: #f8fafc;
+    border: 1px solid #dbe4ee;
+    border-radius: 12px;
+    color: #555;
+    font-weight: 700;
+}
+
+.table-scroll {
+    max-height: calc(100vh - 190px);
+    overflow: auto;
+    border: 1px solid #d6dde6;
+    border-radius: 14px;
+    background: #fff;
+}
+
+.attendance-table {
+    width: 100%;
+    min-width: 1120px;
+    border-collapse: separate;
+    border-spacing: 0;
+    table-layout: fixed;
+}
+
+.attendance-table th,
+.attendance-table td {
+    border-right: 1px solid #dfe5ec;
+    border-bottom: 1px solid #dfe5ec;
+    padding: 12px 10px;
+    font-size: 14px;
+    text-align: center;
+    vertical-align: middle;
+    height: 52px;
+}
+
+.attendance-table th:last-child,
+.attendance-table td:last-child {
+    border-right: none;
+}
+
+.attendance-table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    background: #eef3f8;
+    color: #333;
+    font-weight: 700;
+}
+
+.date-column {
+    width: 90px;
+}
+
+.pattern-column {
+    width: 130px;
+}
+
+.time-column {
+    width: 110px;
+}
+
+.duration-column {
+    width: 110px;
+}
+
+.graph-column {
+    width: 560px;
+}
+
+.graph-header-title {
+    margin-bottom: 6px;
+}
+
+.graph-scale {
+    display: flex;
+    justify-content: space-between;
+    color: #4b5563;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.attendance-table tbody tr.saturday td {
+    background: #eef7ff;
+}
+
+.attendance-table tbody tr.sunday td {
+    background: #fff1f1;
+}
+
+.stamp-time {
+    display: inline-block;
+    border-bottom: 1px dotted #555;
+    cursor: help;
+    font-weight: 700;
+}
+
+.graph-cell {
+    padding: 10px 12px;
+}
+
+.graph-area {
+    position: relative;
+    height: 28px;
+    border-radius: 999px;
+    background:
+        repeating-linear-gradient(
+            to right,
+            transparent 0,
+            transparent calc((100% / 24) - 1px),
+            #d8dee8 calc((100% / 24) - 1px),
+            #d8dee8 calc(100% / 24)
+        ),
+        #f5f7fa;
+    overflow: hidden;
+}
+
+.graph-segment {
+    position: absolute;
+    top: 5px;
+    height: 18px;
+    border-radius: 999px;
+}
+
+.graph-segment.work {
+    background: #9be36d;
+}
+
+.graph-segment.break {
+    background: #ffc75a;
+}
+
+.legend {
+    display: flex;
+    justify-content: flex-end;
+    gap: 18px;
+    margin-top: 12px;
+    color: #555;
+    font-size: 13px;
+}
+
+.legend span {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.legend i {
+    width: 16px;
+    height: 10px;
+    border-radius: 999px;
+    display: inline-block;
+}
+
+.legend-work {
+    background: #9be36d;
+}
+
+.legend-break {
+    background: #ffc75a;
+}
+
+@media (max-width: 900px) {
+    .sidebar {
+        width: 72px;
+    }
+
+    .attendance-main {
+        padding: 24px 20px;
+    }
+
+    .page-header {
+        flex-direction: column;
+    }
+
+    .page-header h1 {
+        font-size: 23px;
+    }
+
+    .table-scroll {
+        max-height: calc(100vh - 240px);
+    }
+}
