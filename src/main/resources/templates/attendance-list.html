@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<title>勤怠状況一覧</title>
+<link rel="stylesheet" th:href="@{/css/attendance-list.css}">
+</head>
+<body th:attr="data-current-month=${isCurrentMonth}">
+    <div class="app-layout">
+
+        <!-- 左側サイドバー -->
+        <aside class="sidebar">
+            <div class="sidebar-top">
+
+                <!-- ホームアイコン -->
+                <a class="side-icon home-icon" th:href="@{/menu}" aria-label="ホーム">
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M12 3 3 10h2v10h6v-6h2v6h6V10h2z"/>
+                    </svg>
+                </a>
+
+                <!-- カレンダーアイコン -->
+                <a class="side-icon calendar-icon active" th:href="@{/attendance-list}" aria-label="勤怠状況一覧">
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M7 2h2v2h6V2h2v2h3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h3V2zm13 8H4v10h16V10zM4 8h16V6H4v2zm3 4h3v3H7v-3zm5 0h3v3h-3v-3zm5 0h2v3h-2v-3zM7 16h3v2H7v-2zm5 0h3v2h-3v-2z"/>
+                    </svg>
+                </a>
+            </div>
+
+            <!-- ログアウトアイコン -->
+            <a class="side-icon logout-icon" th:href="@{/logout}" aria-label="ログアウト">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M10 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h5v-2H5V5h5V3zm6.59 4.41L15.17 8.83 17.34 11H9v2h8.34l-2.17 2.17 1.42 1.42L21 12l-4.41-4.59z"/>
+                </svg>
+            </a>
+        </aside>
+
+        <main class="attendance-main">
+
+            <div class="page-header">
+                <div>
+                    <h1 th:text="${displayName} + 'の出勤簿 - ' + ${selectedYearMonthText}">
+                        山田 太郎の出勤簿 - 2026年4月度
+                    </h1>
+                    <p class="page-description">月ごとの勤怠状況を確認できます。</p>
+                </div>
+
+                <form class="month-select-form" th:action="@{/attendance-list}" method="get">
+                    <select name="year" onchange="this.form.submit()">
+                        <option th:each="y : ${years}"
+                                th:value="${y}"
+                                th:selected="${y == selectedYear}"
+                                th:text="${y} + '年'">
+                            2026年
+                        </option>
+                    </select>
+
+                    <select name="month" onchange="this.form.submit()">
+                        <option th:each="m : ${months}"
+                                th:value="${m}"
+                                th:selected="${m == selectedMonth}"
+                                th:text="${m} + '月'">
+                            4月
+                        </option>
+                    </select>
+                </form>
+            </div>
+
+            <div class="empty-month-message" th:if="${!hasMonthlyRecords}">
+                勤怠記録はありません
+            </div>
+
+            <div class="table-scroll">
+                <table class="attendance-table">
+                    <thead>
+                        <tr>
+                            <th class="date-column">日付</th>
+                            <th class="pattern-column">勤務パターン</th>
+                            <th class="time-column">出勤時刻</th>
+                            <th class="time-column">退勤時刻</th>
+                            <th class="duration-column">休憩時間</th>
+                            <th class="duration-column">実働時間</th>
+                            <th class="graph-column">
+                                <div class="graph-header-title">勤務時間</div>
+                                <div class="graph-scale">
+                                    <span>0</span>
+                                    <span>3</span>
+                                    <span>6</span>
+                                    <span>9</span>
+                                    <span>12</span>
+                                    <span>15</span>
+                                    <span>18</span>
+                                    <span>21</span>
+                                    <span>24</span>
+                                </div>
+                            </th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        <tr th:each="row : ${rows}" th:classappend="${row.rowClass}">
+                            <td th:text="${row.dayText}">1（月）</td>
+                            <td th:text="${row.workPattern}">通常</td>
+
+                            <td>
+                                <span class="stamp-time"
+                                      th:if="${row.startTimeText != ''}"
+                                      th:title="'打刻手段：社内入力'"
+                                      th:text="${row.startTimeText}">
+                                    09:00
+                                </span>
+                            </td>
+
+                            <td>
+                                <span class="stamp-time"
+                                      th:if="${row.endTimeText != ''}"
+                                      th:title="'打刻手段：社内入力'"
+                                      th:text="${row.endTimeText}">
+                                    18:00
+                                </span>
+                            </td>
+
+                            <td th:text="${row.breakTimeText}">0:00</td>
+                            <td th:text="${row.actualWorkTimeText}">8:00</td>
+
+                            <td class="graph-cell">
+                                <div class="graph-area">
+                                    <span th:each="segment : ${row.graphSegments}"
+                                          class="graph-segment"
+                                          th:classappend="${segment.type}"
+                                          th:style="${segment.style}">
+                                    </span>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="legend">
+                <span><i class="legend-work"></i>勤務時間</span>
+                <span><i class="legend-break"></i>休憩時間</span>
+            </div>
+        </main>
+    </div>
+
+    <script th:src="@{/js/attendance-list.js}"></script>
+</body>
+</html>

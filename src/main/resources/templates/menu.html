@@ -10,30 +10,36 @@
 <link rel="stylesheet" th:href="@{/css/menu.css}">
 </head>
 <body>
-<<<<<<< HEAD
-トップメニュー。
-=======
 
     <!-- 画面全体を横並びにするラッパー -->
     <div class="app-layout">
 
-        <!-- 左側のサイドバー -->
-        <aside class="sidebar">
+		<!-- 左側サイドバー -->
+		<aside class="sidebar">
+		    <div class="sidebar-top">
 
-            <!-- ホームアイコン。押すと /menu に戻る -->
-            <a class="side-icon home-icon" th:href="@{/menu}" aria-label="ホーム">
-                <svg viewBox="0 0 24 24" aria-hidden="true">
-                    <path d="M12 3 3 10h2v10h6v-6h2v6h6V10h2z"/>
-                </svg>
-            </a>
+		        <!-- ホームアイコン -->
+		        <a class="side-icon home-icon active" th:href="@{/menu}" aria-label="ホーム">
+		            <svg viewBox="0 0 24 24" aria-hidden="true">
+		                <path d="M12 3 3 10h2v10h6v-6h2v6h6V10h2z"/>
+		            </svg>
+		        </a>
 
-            <!-- ログアウトアイコン。押すと /logout に移動する -->
-            <a class="side-icon logout-icon" th:href="@{/logout}" aria-label="ログアウト">
-                <svg viewBox="0 0 24 24" aria-hidden="true">
-                    <path d="M10 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h5v-2H5V5h5V3zm6.59 4.41L15.17 8.83 17.34 11H9v2h8.34l-2.17 2.17 1.42 1.42L21 12l-4.41-4.59z"/>
-                </svg>
-            </a>
-        </aside>
+		        <!-- カレンダーアイコン -->
+		        <a class="side-icon calendar-icon" th:href="@{/attendance-list}" aria-label="勤怠状況一覧">
+		            <svg viewBox="0 0 24 24" aria-hidden="true">
+		                <path d="M7 2h2v2h6V2h2v2h3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h3V2zm13 8H4v10h16V10zM4 8h16V6H4v2zm3 4h3v3H7v-3zm5 0h3v3h-3v-3zm5 0h2v3h-2v-3zM7 16h3v2H7v-2zm5 0h3v2h-3v-2z"/>
+		            </svg>
+		        </a>
+		    </div>
+
+		    <!-- ログアウトアイコン -->
+		    <a class="side-icon logout-icon" th:href="@{/logout}" aria-label="ログアウト">
+		        <svg viewBox="0 0 24 24" aria-hidden="true">
+		            <path d="M10 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h5v-2H5V5h5V3zm6.59 4.41L15.17 8.83 17.34 11H9v2h8.34l-2.17 2.17 1.42 1.42L21 12l-4.41-4.59z"/>
+		        </svg>
+		    </a>
+		</aside>
 
         <!-- メインコンテンツ -->
         <main class="main-content">
@@ -139,6 +145,5 @@
 
     <!-- 現在日時を更新するJavaScriptを読み込む -->
     <script th:src="@{/js/menu.js}"></script>
->>>>>>> refs/heads/勤怠ボタン（メインメニュー画面）の作成
 </body>
 </html>
