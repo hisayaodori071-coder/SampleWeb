@@ -124,13 +124,18 @@
                             <td th:text="${row.actualWorkTimeText}">8:00</td>
 
                             <td class="graph-cell">
-                                <div class="graph-area">
-                                    <span th:each="segment : ${row.graphSegments}"
-                                          class="graph-segment"
-                                          th:classappend="${segment.type}"
-                                          th:style="${segment.style}">
-                                    </span>
-                                </div>
+								<div class="graph-area"
+								     th:attr="data-today=${row.today},
+								              data-start-minute=${row.startMinute},
+								              data-break-start-minute=${row.breakStartMinute},
+								              data-break-end-minute=${row.breakEndMinute},
+								              data-end-minute=${row.endMinute}">
+								    <span th:each="segment : ${row.graphSegments}"
+								          class="graph-segment"
+								          th:classappend="${segment.type}"
+								          th:style="${segment.style}">
+								    </span>
+								</div>
                             </td>
                         </tr>
                     </tbody>

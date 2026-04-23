@@ -209,7 +209,7 @@ body {
 .graph-area {
     position: relative;
     height: 28px;
-    border-radius: 999px;
+    border-radius: 0;
     background:
         repeating-linear-gradient(
             to right,
@@ -226,7 +226,7 @@ body {
     position: absolute;
     top: 5px;
     height: 18px;
-    border-radius: 999px;
+    border-radius: 0;
 }
 
 .graph-segment.work {

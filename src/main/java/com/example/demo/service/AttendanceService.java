@@ -7,18 +7,18 @@ import java.time.LocalDateTime;
 import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 import org.springframework.stereotype.Service;
 
+import com.example.demo.entity.AttendanceRecordEntity;
 import com.example.demo.model.AttendanceGraphSegment;
 import com.example.demo.model.AttendanceListRow;
 import com.example.demo.model.AttendanceRecord;
+import com.example.demo.repository.AttendanceRecordRepository;
 
 @Service
 public class AttendanceService {
@@ -26,85 +26,50 @@ public class AttendanceService {
     private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("HH:mm");
     private static final long SECONDS_PER_DAY = 24 * 60 * 60;
 
-    /*
-     * DB未使用のため、打刻履歴はメモリ上で保持する。
-     *
-     * キー:
-     *   loginId
-     *
-     * 値:
-     *   そのユーザーの打刻履歴一覧
-     *
-     * 注意:
-     *   Spring Bootを再起動すると履歴は消える。
-     */
-    private final Map<String, List<AttendanceRecord>> records = new ConcurrentHashMap<>();
+    private final AttendanceRecordRepository attendanceRecordRepository;
 
-    /**
-     * 打刻を記録する。
-     */
+    public AttendanceService(AttendanceRecordRepository attendanceRecordRepository) {
+        this.attendanceRecordRepository = attendanceRecordRepository;
+    }
+
     public void record(String loginId, String action) {
-        List<AttendanceRecord> userRecords = records.computeIfAbsent(
+        AttendanceRecordEntity entity = new AttendanceRecordEntity(
                 loginId,
-                key -> Collections.synchronizedList(new ArrayList<>()));
+                action,
+                LocalDateTime.now());
 
-        synchronized (userRecords) {
-            // 新しい履歴が画面上部に来るよう、先頭に追加
-            userRecords.add(0, new AttendanceRecord(loginId, action, LocalDateTime.now()));
-        }
+        attendanceRecordRepository.save(entity);
     }
 
-    /**
-     * 指定ユーザーの打刻履歴を返す。
-     */
     public List<AttendanceRecord> getRecords(String loginId) {
-        List<AttendanceRecord> userRecords = records.get(loginId);
+        List<AttendanceRecordEntity> entities =
+                attendanceRecordRepository.findByLoginIdOrderByRecordedAtDesc(loginId);
 
-        if (userRecords == null) {
-            return List.of();
+        List<AttendanceRecord> records = new ArrayList<>();
+
+        for (AttendanceRecordEntity entity : entities) {
+            records.add(new AttendanceRecord(
+                    entity.getLoginId(),
+                    entity.getAction(),
+                    entity.getRecordedAt()));
         }
 
-        synchronized (userRecords) {
-            // 内部リストを直接返さず、コピーして返す
-            return new ArrayList<>(userRecords);
-        }
+        return records;
     }
 
-    /**
-     * 今日すでに同じ打刻をしているか判定する。
-     */
     public boolean hasRecordedToday(String loginId, String action) {
-        List<AttendanceRecord> userRecords = records.get(loginId);
-
-        if (userRecords == null) {
-            return false;
-        }
-
         LocalDate today = LocalDate.now();
 
-        synchronized (userRecords) {
-            for (AttendanceRecord record : userRecords) {
-                if (record.getRecordedAt().toLocalDate().equals(today)
-                        && record.getAction().equals(action)) {
-                    return true;
-                }
-            }
-        }
+        LocalDateTime startOfDay = today.atStartOfDay();
+        LocalDateTime startOfNextDay = today.plusDays(1).atStartOfDay();
 
-        return false;
+        return attendanceRecordRepository.existsByLoginIdAndActionAndRecordedAtBetween(
+                loginId,
+                action,
+                startOfDay,
+                startOfNextDay);
     }
 
-    /**
-     * 打刻順が正しいかを判定する。
-     *
-     * 戻り値:
-     *   問題なし → null
-     *   問題あり → 画面に表示するエラーメッセージ
-     *
-     * 想定する正常パターン:
-     *   1. 出勤 → 休憩開始 → 休憩終了 → 退勤
-     *   2. 出勤 → 退勤
-     */
     public String validateActionOrder(String loginId, String action) {
 
         boolean started = hasRecordedToday(loginId, "出勤");
@@ -166,9 +131,6 @@ public class AttendanceService {
         }
     }
 
-    /**
-     * 勤怠状況一覧画面用に、指定月の全日分の表示データを作る。
-     */
     public List<AttendanceListRow> getMonthlyRows(String loginId, YearMonth yearMonth) {
 
         List<AttendanceRecord> userRecords = getRecords(loginId);
@@ -197,9 +159,6 @@ public class AttendanceService {
         return rows;
     }
 
-    /**
-     * 1日分の勤怠一覧行を作る。
-     */
     private AttendanceListRow createAttendanceListRow(LocalDate date, List<AttendanceRecord> dayRecords) {
 
         AttendanceRecord startRecord = findRecord(dayRecords, "出勤");
@@ -210,7 +169,6 @@ public class AttendanceService {
         String dayText = date.getDayOfMonth() + "（" + getDayOfWeekText(date.getDayOfWeek()) + "）";
         String rowClass = getRowClass(date.getDayOfWeek());
 
-        // 現時点では全日「通常」
         String workPattern = "通常";
 
         String startTimeText = formatTime(startRecord);
@@ -254,6 +212,7 @@ public class AttendanceService {
                 endRecord == null ? null : endRecord.getRecordedAt());
 
         boolean hasRecord = !dayRecords.isEmpty();
+        boolean today = date.equals(LocalDate.now());
 
         return new AttendanceListRow(
                 dayText,
@@ -264,12 +223,14 @@ public class AttendanceService {
                 breakTimeText,
                 actualWorkTimeText,
                 hasRecord,
-                graphSegments);
+                graphSegments,
+                today,
+                toMinuteOfDay(startRecord),
+                toMinuteOfDay(breakStartRecord),
+                toMinuteOfDay(breakEndRecord),
+                toMinuteOfDay(endRecord));
     }
 
-    /**
-     * 指定された打刻種別のレコードを探す。
-     */
     private AttendanceRecord findRecord(List<AttendanceRecord> records, String action) {
         for (AttendanceRecord record : records) {
             if (record.getAction().equals(action)) {
@@ -280,19 +241,6 @@ public class AttendanceService {
         return null;
     }
 
-    /**
-     * 勤務時間グラフ用の区間データを作る。
-     *
-     * 退勤済み:
-     *   出勤〜退勤まで表示
-     *
-     * 退勤前の今日:
-     *   出勤〜現在時刻まで表示
-     *
-     * 休憩中の今日:
-     *   出勤〜休憩開始を勤務色
-     *   休憩開始〜現在時刻を休憩色
-     */
     private List<AttendanceGraphSegment> createGraphSegments(
             LocalDate date,
             LocalDateTime startAt,
@@ -310,12 +258,10 @@ public class AttendanceService {
 
         LocalDateTime graphEndAt = endAt;
 
-        // 退勤していない今日のデータは、現在時刻までグラフを伸ばす
         if (graphEndAt == null && date.equals(today)) {
             graphEndAt = LocalDateTime.now();
         }
 
-        // 退勤していない過去日・未来日はグラフを表示しない
         if (graphEndAt == null || !graphEndAt.isAfter(startAt)) {
             return segments;
         }
@@ -324,7 +270,6 @@ public class AttendanceService {
                 && breakStartAt.isAfter(startAt)
                 && breakStartAt.isBefore(graphEndAt)) {
 
-            // 出勤〜休憩開始
             addSegment(segments, date, startAt, breakStartAt, "work");
 
             if (breakEndAt != null && breakEndAt.isAfter(breakStartAt)) {
@@ -332,29 +277,22 @@ public class AttendanceService {
                         ? breakEndAt
                         : graphEndAt;
 
-                // 休憩開始〜休憩終了
                 addSegment(segments, date, breakStartAt, breakSegmentEndAt, "break");
 
-                // 休憩終了〜退勤または現在時刻
                 if (breakEndAt.isBefore(graphEndAt)) {
                     addSegment(segments, date, breakEndAt, graphEndAt, "work");
                 }
             } else {
-                // 休憩開始済み、休憩終了前の場合
                 addSegment(segments, date, breakStartAt, graphEndAt, "break");
             }
 
         } else {
-            // 休憩なし
             addSegment(segments, date, startAt, graphEndAt, "work");
         }
 
         return segments;
     }
 
-    /**
-     * グラフ区間を追加する。
-     */
     private void addSegment(
             List<AttendanceGraphSegment> segments,
             LocalDate date,
@@ -399,6 +337,15 @@ public class AttendanceService {
         }
 
         return record.getRecordedAt().format(TIME_FORMATTER);
+    }
+
+    private Integer toMinuteOfDay(AttendanceRecord record) {
+        if (record == null) {
+            return null;
+        }
+
+        return record.getRecordedAt().getHour() * 60
+                + record.getRecordedAt().getMinute();
     }
 
     private Duration safeDuration(LocalDateTime from, LocalDateTime to) {

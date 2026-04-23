@@ -17,6 +17,13 @@ public class AttendanceListRow {
     private final boolean hasRecord;
     private final List<AttendanceGraphSegment> graphSegments;
 
+    // JavaScriptでリアルタイムグラフ更新に使う値
+    private final boolean today;
+    private final Integer startMinute;
+    private final Integer breakStartMinute;
+    private final Integer breakEndMinute;
+    private final Integer endMinute;
+
     public AttendanceListRow(
             String dayText,
             String rowClass,
@@ -26,7 +33,12 @@ public class AttendanceListRow {
             String breakTimeText,
             String actualWorkTimeText,
             boolean hasRecord,
-            List<AttendanceGraphSegment> graphSegments) {
+            List<AttendanceGraphSegment> graphSegments,
+            boolean today,
+            Integer startMinute,
+            Integer breakStartMinute,
+            Integer breakEndMinute,
+            Integer endMinute) {
 
         this.dayText = dayText;
         this.rowClass = rowClass;
@@ -37,6 +49,12 @@ public class AttendanceListRow {
         this.actualWorkTimeText = actualWorkTimeText;
         this.hasRecord = hasRecord;
         this.graphSegments = graphSegments;
+
+        this.today = today;
+        this.startMinute = startMinute;
+        this.breakStartMinute = breakStartMinute;
+        this.breakEndMinute = breakEndMinute;
+        this.endMinute = endMinute;
     }
 
     public String getDayText() {
@@ -73,5 +91,25 @@ public class AttendanceListRow {
 
     public List<AttendanceGraphSegment> getGraphSegments() {
         return graphSegments;
+    }
+
+    public boolean isToday() {
+        return today;
+    }
+
+    public Integer getStartMinute() {
+        return startMinute;
+    }
+
+    public Integer getBreakStartMinute() {
+        return breakStartMinute;
+    }
+
+    public Integer getBreakEndMinute() {
+        return breakEndMinute;
+    }
+
+    public Integer getEndMinute() {
+        return endMinute;
     }
 }
