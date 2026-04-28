@@ -14,6 +14,12 @@
 				"configurationType": "MANUAL",
 				"type": "dev",
 				"closeIdleConnection": true,
+				"properties": {
+					"connectTimeout": "20000",
+					"rewriteBatchedStatements": "true",
+					"enabledTLSProtocols": "TLSv1,TLSv1.1,TLSv1.2,TLSv1.3",
+					"allowPublicKeyRetrieval": "TRUE"
+				},
 				"provider-properties": {
 					"@dbeaver-show-all-dbs@": "true"
 				},
