@@ -11,14 +11,19 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 
 import org.springframework.stereotype.Service;
 
-import com.example.demo.entity.AttendanceRecordEntity;
+import com.example.demo.entity.AttendanceDailyEntity;
+import com.example.demo.entity.AttendancePunchEntity;
+import com.example.demo.entity.UserEntity;
 import com.example.demo.model.AttendanceGraphSegment;
 import com.example.demo.model.AttendanceListRow;
 import com.example.demo.model.AttendanceRecord;
-import com.example.demo.repository.AttendanceRecordRepository;
+import com.example.demo.repository.AttendanceDailyRepository;
+import com.example.demo.repository.AttendancePunchRepository;
+import com.example.demo.repository.UserRepository;
 
 @Service
 public class AttendanceService {
@@ -26,48 +31,132 @@ public class AttendanceService {
     private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("HH:mm");
     private static final long SECONDS_PER_DAY = 24 * 60 * 60;
 
-    private final AttendanceRecordRepository attendanceRecordRepository;
+    private static final int NOT_DELETED = 0;
 
-    public AttendanceService(AttendanceRecordRepository attendanceRecordRepository) {
-        this.attendanceRecordRepository = attendanceRecordRepository;
+    private static final String STATUS_WORKING = "WORKING";
+    private static final String STATUS_BREAK = "BREAK";
+    private static final String STATUS_FINISHED = "FINISHED";
+
+    private static final String PUNCH_START = "START";
+    private static final String PUNCH_END = "END";
+    private static final String PUNCH_BREAK_START = "BREAK_START";
+    private static final String PUNCH_BREAK_END = "BREAK_END";
+
+    private static final String PUNCH_METHOD_WEB_INTERNAL = "WEB_INTERNAL";
+
+    private final AttendanceDailyRepository attendanceDailyRepository;
+    private final AttendancePunchRepository attendancePunchRepository;
+    private final UserRepository userRepository;
+
+    public AttendanceService(
+            AttendanceDailyRepository attendanceDailyRepository,
+            AttendancePunchRepository attendancePunchRepository,
+            UserRepository userRepository) {
+        this.attendanceDailyRepository = attendanceDailyRepository;
+        this.attendancePunchRepository = attendancePunchRepository;
+        this.userRepository = userRepository;
     }
 
     public void record(String loginId, String action) {
-        AttendanceRecordEntity entity = new AttendanceRecordEntity(
-                loginId,
-                action,
-                LocalDateTime.now());
 
-        attendanceRecordRepository.save(entity);
+        Optional<UserEntity> optionalUser = findActiveUser(loginId);
+        if (optionalUser.isEmpty()) {
+            throw new IllegalStateException("ユーザーが存在しません。");
+        }
+
+        UserEntity user = optionalUser.get();
+        Long userId = user.getUserId();
+        LocalDate today = LocalDate.now();
+        LocalDateTime now = LocalDateTime.now();
+
+        AttendanceDailyEntity daily = attendanceDailyRepository
+                .findByUserIdAndWorkDate(userId, today)
+                .orElseGet(() -> createNewDaily(userId, today, now));
+
+        switch (action) {
+            case "出勤":
+                daily.setStartAt(now);
+                daily.setAttendanceStatus(STATUS_WORKING);
+                daily.setUpdatedAt(now);
+                daily = attendanceDailyRepository.save(daily);
+                savePunch(userId, daily.getAttendanceDailyId(), PUNCH_START, now);
+                break;
+
+            case "休憩開始":
+                daily.setAttendanceStatus(STATUS_BREAK);
+                daily.setUpdatedAt(now);
+                daily = attendanceDailyRepository.save(daily);
+                savePunch(userId, daily.getAttendanceDailyId(), PUNCH_BREAK_START, now);
+                break;
+
+            case "休憩終了":
+                daily.setAttendanceStatus(STATUS_WORKING);
+                daily.setUpdatedAt(now);
+                daily = attendanceDailyRepository.save(daily);
+                savePunch(userId, daily.getAttendanceDailyId(), PUNCH_BREAK_END, now);
+                break;
+
+            case "退勤":
+                daily.setEndAt(now);
+                daily.setAttendanceStatus(STATUS_FINISHED);
+                daily.setUpdatedAt(now);
+                daily = attendanceDailyRepository.save(daily);
+                savePunch(userId, daily.getAttendanceDailyId(), PUNCH_END, now);
+                break;
+
+            default:
+                throw new IllegalArgumentException("不正な打刻種別です。");
+        }
     }
 
     public List<AttendanceRecord> getRecords(String loginId) {
-        List<AttendanceRecordEntity> entities =
-                attendanceRecordRepository.findByLoginIdOrderByRecordedAtDesc(loginId);
+
+        Optional<UserEntity> optionalUser = findActiveUser(loginId);
+        if (optionalUser.isEmpty()) {
+            return List.of();
+        }
+
+        Long userId = optionalUser.get().getUserId();
+
+        List<AttendancePunchEntity> punches =
+                attendancePunchRepository.findByUserIdOrderByPunchedAtDesc(userId);
 
         List<AttendanceRecord> records = new ArrayList<>();
 
-        for (AttendanceRecordEntity entity : entities) {
+        for (AttendancePunchEntity punch : punches) {
             records.add(new AttendanceRecord(
-                    entity.getLoginId(),
-                    entity.getAction(),
-                    entity.getRecordedAt()));
+                    loginId,
+                    toActionLabel(punch.getPunchType()),
+                    punch.getPunchedAt()));
         }
 
         return records;
     }
 
     public boolean hasRecordedToday(String loginId, String action) {
-        LocalDate today = LocalDate.now();
 
-        LocalDateTime startOfDay = today.atStartOfDay();
-        LocalDateTime startOfNextDay = today.plusDays(1).atStartOfDay();
+        Optional<UserEntity> optionalUser = findActiveUser(loginId);
+        if (optionalUser.isEmpty()) {
+            return false;
+        }
 
-        return attendanceRecordRepository.existsByLoginIdAndActionAndRecordedAtBetween(
-                loginId,
-                action,
-                startOfDay,
-                startOfNextDay);
+        Long userId = optionalUser.get().getUserId();
+
+        Optional<AttendanceDailyEntity> optionalDaily =
+                attendanceDailyRepository.findByUserIdAndWorkDate(userId, LocalDate.now());
+
+        if (optionalDaily.isEmpty()) {
+            return false;
+        }
+
+        String punchType = toPunchType(action);
+        if (punchType == null) {
+            return false;
+        }
+
+        return attendancePunchRepository.existsByAttendanceDailyIdAndPunchType(
+                optionalDaily.get().getAttendanceDailyId(),
+                punchType);
     }
 
     public String validateActionOrder(String loginId, String action) {
@@ -133,68 +222,87 @@ public class AttendanceService {
 
     public List<AttendanceListRow> getMonthlyRows(String loginId, YearMonth yearMonth) {
 
-        List<AttendanceRecord> userRecords = getRecords(loginId);
+        Optional<UserEntity> optionalUser = findActiveUser(loginId);
+        if (optionalUser.isEmpty()) {
+            return List.of();
+        }
 
-        Map<LocalDate, List<AttendanceRecord>> monthlyRecords = new HashMap<>();
+        Long userId = optionalUser.get().getUserId();
 
-        for (AttendanceRecord record : userRecords) {
-            LocalDate recordDate = record.getRecordedAt().toLocalDate();
+        List<AttendanceDailyEntity> dailyList =
+                attendanceDailyRepository.findByUserIdAndWorkDateBetweenOrderByWorkDateAsc(
+                        userId,
+                        yearMonth.atDay(1),
+                        yearMonth.atEndOfMonth());
 
-            if (YearMonth.from(recordDate).equals(yearMonth)) {
-                monthlyRecords
-                        .computeIfAbsent(recordDate, key -> new ArrayList<>())
-                        .add(record);
-            }
+        Map<LocalDate, AttendanceDailyEntity> dailyMap = new HashMap<>();
+        for (AttendanceDailyEntity daily : dailyList) {
+            dailyMap.put(daily.getWorkDate(), daily);
         }
 
         List<AttendanceListRow> rows = new ArrayList<>();
 
         for (int day = 1; day <= yearMonth.lengthOfMonth(); day++) {
             LocalDate date = yearMonth.atDay(day);
-            List<AttendanceRecord> dayRecords = monthlyRecords.getOrDefault(date, List.of());
-
-            rows.add(createAttendanceListRow(date, dayRecords));
+            AttendanceDailyEntity daily = dailyMap.get(date);
+            rows.add(createAttendanceListRow(date, daily));
         }
 
         return rows;
     }
 
-    private AttendanceListRow createAttendanceListRow(LocalDate date, List<AttendanceRecord> dayRecords) {
-
-        AttendanceRecord startRecord = findRecord(dayRecords, "出勤");
-        AttendanceRecord endRecord = findRecord(dayRecords, "退勤");
-        AttendanceRecord breakStartRecord = findRecord(dayRecords, "休憩開始");
-        AttendanceRecord breakEndRecord = findRecord(dayRecords, "休憩終了");
+    private AttendanceListRow createAttendanceListRow(LocalDate date, AttendanceDailyEntity daily) {
 
         String dayText = date.getDayOfMonth() + "（" + getDayOfWeekText(date.getDayOfWeek()) + "）";
         String rowClass = getRowClass(date.getDayOfWeek());
-
         String workPattern = "通常";
 
-        String startTimeText = formatTime(startRecord);
-        String endTimeText = formatTime(endRecord);
+        if (daily == null) {
+            return new AttendanceListRow(
+                    dayText,
+                    rowClass,
+                    workPattern,
+                    "",
+                    "",
+                    "",
+                    "",
+                    false,
+                    List.of(),
+                    date.equals(LocalDate.now()),
+                    null,
+                    null,
+                    null,
+                    null);
+        }
+
+        List<AttendancePunchEntity> punches =
+                attendancePunchRepository.findByAttendanceDailyIdOrderByPunchedAtAsc(
+                        daily.getAttendanceDailyId());
+
+        AttendancePunchEntity breakStartPunch = findPunch(punches, PUNCH_BREAK_START);
+        AttendancePunchEntity breakEndPunch = findPunch(punches, PUNCH_BREAK_END);
+
+        String startTimeText = formatTime(daily.getStartAt());
+        String endTimeText = formatTime(daily.getEndAt());
 
         Duration breakDuration = Duration.ZERO;
         String breakTimeText = "";
 
-        if (startRecord != null) {
-            if (breakStartRecord == null) {
+        if (daily.getStartAt() != null) {
+            if (breakStartPunch == null) {
                 breakTimeText = "0:00";
-            } else if (breakEndRecord != null) {
+            } else if (breakEndPunch != null) {
                 breakDuration = safeDuration(
-                        breakStartRecord.getRecordedAt(),
-                        breakEndRecord.getRecordedAt());
+                        breakStartPunch.getPunchedAt(),
+                        breakEndPunch.getPunchedAt());
                 breakTimeText = formatDuration(breakDuration);
             }
         }
 
         String actualWorkTimeText = "";
 
-        if (startRecord != null && endRecord != null) {
-            Duration totalDuration = safeDuration(
-                    startRecord.getRecordedAt(),
-                    endRecord.getRecordedAt());
-
+        if (daily.getStartAt() != null && daily.getEndAt() != null) {
+            Duration totalDuration = safeDuration(daily.getStartAt(), daily.getEndAt());
             Duration actualWorkDuration = totalDuration.minus(breakDuration);
 
             if (actualWorkDuration.isNegative()) {
@@ -206,13 +314,10 @@ public class AttendanceService {
 
         List<AttendanceGraphSegment> graphSegments = createGraphSegments(
                 date,
-                startRecord == null ? null : startRecord.getRecordedAt(),
-                breakStartRecord == null ? null : breakStartRecord.getRecordedAt(),
-                breakEndRecord == null ? null : breakEndRecord.getRecordedAt(),
-                endRecord == null ? null : endRecord.getRecordedAt());
-
-        boolean hasRecord = !dayRecords.isEmpty();
-        boolean today = date.equals(LocalDate.now());
+                daily.getStartAt(),
+                breakStartPunch == null ? null : breakStartPunch.getPunchedAt(),
+                breakEndPunch == null ? null : breakEndPunch.getPunchedAt(),
+                daily.getEndAt());
 
         return new AttendanceListRow(
                 dayText,
@@ -222,23 +327,80 @@ public class AttendanceService {
                 endTimeText,
                 breakTimeText,
                 actualWorkTimeText,
-                hasRecord,
+                true,
                 graphSegments,
-                today,
-                toMinuteOfDay(startRecord),
-                toMinuteOfDay(breakStartRecord),
-                toMinuteOfDay(breakEndRecord),
-                toMinuteOfDay(endRecord));
+                date.equals(LocalDate.now()),
+                toMinuteOfDay(daily.getStartAt()),
+                toMinuteOfDay(breakStartPunch == null ? null : breakStartPunch.getPunchedAt()),
+                toMinuteOfDay(breakEndPunch == null ? null : breakEndPunch.getPunchedAt()),
+                toMinuteOfDay(daily.getEndAt()));
     }
 
-    private AttendanceRecord findRecord(List<AttendanceRecord> records, String action) {
-        for (AttendanceRecord record : records) {
-            if (record.getAction().equals(action)) {
-                return record;
+    private AttendanceDailyEntity createNewDaily(Long userId, LocalDate workDate, LocalDateTime now) {
+        AttendanceDailyEntity daily = new AttendanceDailyEntity();
+        daily.setUserId(userId);
+        daily.setWorkDate(workDate);
+        daily.setWorkPatternId(null);
+        daily.setAttendanceStatus(STATUS_WORKING);
+        daily.setRemarks(null);
+        daily.setCreatedAt(now);
+        daily.setUpdatedAt(now);
+        return daily;
+    }
+
+    private void savePunch(Long userId, Long attendanceDailyId, String punchType, LocalDateTime now) {
+        AttendancePunchEntity punch = new AttendancePunchEntity();
+        punch.setUserId(userId);
+        punch.setAttendanceDailyId(attendanceDailyId);
+        punch.setPunchType(punchType);
+        punch.setPunchedAt(now);
+        punch.setPunchMethod(PUNCH_METHOD_WEB_INTERNAL);
+        punch.setPunchNote(null);
+        punch.setCreatedAt(now);
+        attendancePunchRepository.save(punch);
+    }
+
+    private Optional<UserEntity> findActiveUser(String loginId) {
+        return userRepository.findByLoginIdAndDeletedFlag(loginId, NOT_DELETED);
+    }
+
+    private AttendancePunchEntity findPunch(List<AttendancePunchEntity> punches, String punchType) {
+        for (AttendancePunchEntity punch : punches) {
+            if (punchType.equals(punch.getPunchType())) {
+                return punch;
             }
         }
-
         return null;
+    }
+
+    private String toPunchType(String action) {
+        switch (action) {
+            case "出勤":
+                return PUNCH_START;
+            case "退勤":
+                return PUNCH_END;
+            case "休憩開始":
+                return PUNCH_BREAK_START;
+            case "休憩終了":
+                return PUNCH_BREAK_END;
+            default:
+                return null;
+        }
+    }
+
+    private String toActionLabel(String punchType) {
+        switch (punchType) {
+            case PUNCH_START:
+                return "出勤";
+            case PUNCH_END:
+                return "退勤";
+            case PUNCH_BREAK_START:
+                return "休憩開始";
+            case PUNCH_BREAK_END:
+                return "休憩終了";
+            default:
+                return punchType;
+        }
     }
 
     private List<AttendanceGraphSegment> createGraphSegments(
@@ -331,30 +493,25 @@ public class AttendanceService {
         return value;
     }
 
-    private String formatTime(AttendanceRecord record) {
-        if (record == null) {
+    private String formatTime(LocalDateTime dateTime) {
+        if (dateTime == null) {
             return "";
         }
-
-        return record.getRecordedAt().format(TIME_FORMATTER);
+        return dateTime.format(TIME_FORMATTER);
     }
 
-    private Integer toMinuteOfDay(AttendanceRecord record) {
-        if (record == null) {
+    private Integer toMinuteOfDay(LocalDateTime dateTime) {
+        if (dateTime == null) {
             return null;
         }
-
-        return record.getRecordedAt().getHour() * 60
-                + record.getRecordedAt().getMinute();
+        return dateTime.getHour() * 60 + dateTime.getMinute();
     }
 
     private Duration safeDuration(LocalDateTime from, LocalDateTime to) {
         Duration duration = Duration.between(from, to);
-
         if (duration.isNegative()) {
             return Duration.ZERO;
         }
-
         return duration;
     }
 
@@ -362,7 +519,6 @@ public class AttendanceService {
         long totalMinutes = duration.toMinutes();
         long hours = totalMinutes / 60;
         long minutes = totalMinutes % 60;
-
         return hours + ":" + String.format(Locale.US, "%02d", minutes);
     }
 
@@ -391,11 +547,9 @@ public class AttendanceService {
         if (dayOfWeek == DayOfWeek.SATURDAY) {
             return "saturday";
         }
-
         if (dayOfWeek == DayOfWeek.SUNDAY) {
             return "sunday";
         }
-
         return "";
     }
 }

@@ -10,6 +10,9 @@ import com.example.demo.repository.UserRepository;
 @Service
 public class TestUserService {
 
+    private static final int NOT_DELETED = 0;
+    private static final String ACTIVE = "ACTIVE";
+
     private final UserRepository userRepository;
 
     public TestUserService(UserRepository userRepository) {
@@ -22,7 +25,8 @@ public class TestUserService {
             return false;
         }
 
-        Optional<UserEntity> optionalUser = userRepository.findByLoginId(loginId);
+        Optional<UserEntity> optionalUser =
+                userRepository.findByLoginIdAndDeletedFlag(loginId, NOT_DELETED);
 
         if (optionalUser.isEmpty()) {
             return false;
@@ -30,12 +34,22 @@ public class TestUserService {
 
         UserEntity user = optionalUser.get();
 
+        if (!ACTIVE.equals(user.getUserStatus())) {
+            return false;
+        }
+
         return password.equals(user.getPassword());
     }
 
     public String getDisplayName(String loginId) {
-        return userRepository.findByLoginId(loginId)
-                .map(UserEntity::getDisplayName)
+        return userRepository.findByLoginIdAndDeletedFlag(loginId, NOT_DELETED)
+                .map(user -> user.getLastName() + " " + user.getFirstName())
                 .orElse(loginId);
+    }
+
+    public Long getUserId(String loginId) {
+        return userRepository.findByLoginIdAndDeletedFlag(loginId, NOT_DELETED)
+                .map(UserEntity::getUserId)
+                .orElse(null);
     }
 }

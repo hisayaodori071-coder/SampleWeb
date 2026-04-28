@@ -6,7 +6,9 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import com.example.demo.entity.UserEntity;
 
-public interface UserRepository extends JpaRepository<UserEntity, String> {
+public interface UserRepository extends JpaRepository<UserEntity, Long> {
 
-    Optional<UserEntity> findByLoginId(String loginId);
+    Optional<UserEntity> findByLoginIdAndDeletedFlag(String loginId, Integer deletedFlag);
+
+    Optional<UserEntity> findByUserIdAndDeletedFlag(Long userId, Integer deletedFlag);
 }
