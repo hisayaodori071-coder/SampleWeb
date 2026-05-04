@@ -48,15 +48,23 @@
                     <input type="text" th:field="*{firstName}" >
                 </div>
 
-                <div class="form-row">
-                    <label><span class="required">*</span>姓カナ</label>
-                    <input type="text" th:field="*{lastNameKana}" >
-                </div>
+				<div class="form-row">
+				    <label><span class="required">*</span>姓カナ</label>
+				    <input type="text"
+				           th:field="*{lastNameKana}"
+				           class="kana-only"
+				           pattern="^[ァ-ヶー　\s]+$"
+				           title="全角カタカナで入力してください">
+				</div>
 
-                <div class="form-row">
-                    <label><span class="required">*</span>名カナ</label>
-                    <input type="text" th:field="*{firstNameKana}" >
-                </div>
+				<div class="form-row">
+				    <label><span class="required">*</span>名カナ</label>
+				    <input type="text"
+				           th:field="*{firstNameKana}"
+				           class="kana-only"
+				           pattern="^[ァ-ヶー　\s]+$"
+				           title="全角カタカナで入力してください">
+				</div>
 
                 <div class="form-row">
                     <label><span class="required">*</span>生年月日</label>
@@ -150,6 +158,24 @@
             passwordInput.value = birthDateInput.value.replaceAll('-', '');
         });
     }
+
+    function toKatakana(value) {
+        return value.replace(/[ぁ-ゖ]/g, function (char) {
+            return String.fromCharCode(char.charCodeAt(0) + 0x60);
+        });
+    }
+
+    function normalizeKanaInput(input) {
+        let value = toKatakana(input.value);
+        value = value.replace(/[^ァ-ヶー　\s]/g, '');
+        input.value = value;
+    }
+
+    document.querySelectorAll('.kana-only').forEach(function (input) {
+        input.addEventListener('input', function () {
+            normalizeKanaInput(input);
+        });
+    });
 </script>
 </body>
 </html>

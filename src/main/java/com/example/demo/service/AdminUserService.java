@@ -284,7 +284,7 @@ public class AdminUserService {
         form.setBirthDate(user.getBirthDate());
         form.setLoginId(user.getLoginId());
 
-        // 現在のパスワードを表示し、編集可能にする
+        // 編集画面では現在のパスワードも表示して編集可能にする
         form.setPassword(user.getPassword());
 
         form.setEmail(user.getEmail());
@@ -325,9 +325,14 @@ public class AdminUserService {
         }
         if (!hasText(form.getLastNameKana())) {
             errors.add("姓カナを入力してください。");
+        } else if (!isKatakana(form.getLastNameKana())) {
+            errors.add("姓カナは全角カタカナで入力してください。");
         }
+
         if (!hasText(form.getFirstNameKana())) {
             errors.add("名カナを入力してください。");
+        } else if (!isKatakana(form.getFirstNameKana())) {
+            errors.add("名カナは全角カタカナで入力してください。");
         }
         if (form.getBirthDate() == null) {
             errors.add("生年月日を入力してください。");
@@ -369,13 +374,19 @@ public class AdminUserService {
     }
 
     private void replaceUserRoles(Long userId, List<Long> roleIds, LocalDateTime now) {
+        // 既存権限を削除
         userRoleRepository.deleteByUserId(userId);
+
+        // delete をDBへ反映してから insert する
+        userRoleRepository.flush();
 
         if (roleIds == null || roleIds.isEmpty()) {
             return;
         }
 
+        // 同じroleIdが複数送られてきても1回だけ登録する
         Set<Long> uniqueRoleIds = new HashSet<>(roleIds);
+
         for (Long roleId : uniqueRoleIds) {
             UserRoleEntity userRole = new UserRoleEntity();
             userRole.setUserId(userId);
@@ -412,6 +423,13 @@ public class AdminUserService {
     private boolean isValidEmail(String email) {
         String value = email == null ? "" : email.trim();
         return value.contains("@") && value.contains(".");
+    }
+    
+    private boolean isKatakana(String value) {
+        if (value == null) {
+            return false;
+        }
+        return value.trim().matches("^[ァ-ヶー　\\s]+$");
     }
 
     private boolean hasText(String value) {

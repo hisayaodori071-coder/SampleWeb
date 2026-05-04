@@ -134,13 +134,12 @@ public class AdminUserController {
             return "admin/user-edit";
         }
 
-        // ログイン中ユーザー自身のログインIDを変更した場合に備えて、
-        // 更新前に現在ログイン中のユーザーIDを取得しておく
+        // 自分自身のログインID変更に備えて、更新前のログインユーザーIDを取得
         Long loginUserId = testUserService.getUserId(loginId);
 
         adminUserService.updateUser(userId, form);
 
-        // 自分自身のログインIDを変更した場合は、セッションの loginUser も更新する
+        // 自分自身のログインIDを変更した場合、セッションも新しいログインIDに更新
         if (loginUserId != null && loginUserId.equals(userId) && form.getLoginId() != null) {
             session.setAttribute("loginUser", form.getLoginId().trim());
         }
