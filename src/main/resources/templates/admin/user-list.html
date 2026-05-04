@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="ja" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>ユーザー一覧</title>
+    <link rel="stylesheet" th:href="@{/css/admin-user.css}">
+    <link rel="stylesheet" th:href="@{/css/common-sidebar.css}">
+</head>
+<body>
+<div class="admin-layout">
+
+    <!-- 共通サイドバー -->
+    <div th:replace="~{fragments/sidebar :: sidebar('admin')}"></div>
+
+    <main class="admin-main">
+		<header class="admin-header">
+		    <div>
+		        <h1>ユーザー一覧</h1>
+		        <p class="login-user">
+		            ログイン中：
+		            <span th:text="${displayName}">ユーザー名</span>
+		        </p>
+		    </div>
+		</header>
+
+        <div class="message success" th:if="${successMessage != null}" th:text="${successMessage}"></div>
+        <div class="message error" th:if="${errorMessage != null}" th:text="${errorMessage}"></div>
+
+		<section class="action-bar user-list-action-bar">
+		    <a class="gray-button" th:href="@{/admin/menu}">管理者メニューへ戻る</a>
+
+		    <a class="primary-button" th:href="@{/admin/users/new}">
+		        ユーザー新規登録
+		    </a>
+		</section>
+
+        <section class="table-card">
+            <div class="table-scroll">
+                <table class="user-table">
+                    <thead>
+                        <tr>
+                            <th class="employee-column">社員番号</th>
+                            <th class="name-column">氏名</th>
+                            <th class="status-column">利用状態</th>
+                            <th class="department-column">部署</th>
+                            <th class="email-column">メールアドレス</th>
+                            <th class="edit-column">編集</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="user : ${users}">
+                            <td th:text="${user.employeeId}">000001</td>
+                            <td th:text="${user.fullName}">山田 太郎</td>
+                            <td><span class="status-badge" th:text="${user.userStatusText}">有効</span></td>
+                            <td th:text="${user.departmentName}">開発部</td>
+                            <td th:text="${user.email}">yamada@example.com</td>
+                            <td>
+                                <a class="small-button" th:href="@{/admin/users/{id}/edit(id=${user.userId})}">編集</a>
+                            </td>
+                        </tr>
+                        <tr th:if="${#lists.isEmpty(users)}">
+                            <td colspan="6" class="empty-cell">表示できるユーザーがいません。</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+</div>
+</body>
+</html>

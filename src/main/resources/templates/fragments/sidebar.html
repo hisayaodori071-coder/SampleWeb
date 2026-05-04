@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="ja" xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<aside class="sidebar" th:fragment="sidebar(activeMenu)">
+
+    <nav class="sidebar-nav">
+        <a th:href="@{/menu}"
+           class="sidebar-link"
+           th:classappend="${activeMenu == 'home'} ? ' active' : ''">ホーム</a>
+
+        <a th:href="@{/attendance-list}"
+           class="sidebar-link"
+           th:classappend="${activeMenu == 'attendance'} ? ' active' : ''">勤怠一覧</a>
+
+        <a th:href="@{/admin/menu}"
+           class="sidebar-link"
+           th:classappend="${activeMenu == 'admin'} ? ' active' : ''">管理者</a>
+
+        <a th:href="@{/logout}" class="sidebar-link logout">ログアウト</a>
+    </nav>
+</aside>
+
+</body>
+</html>

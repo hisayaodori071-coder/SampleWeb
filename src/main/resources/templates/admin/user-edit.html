@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="ja" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>ユーザー編集</title>
+    <link rel="stylesheet" th:href="@{/css/admin-user.css}">
+    <link rel="stylesheet" th:href="@{/css/common-sidebar.css}">
+</head>
+<body>
+<div class="admin-layout">
+
+    <!-- 共通サイドバー -->
+    <div th:replace="~{fragments/sidebar :: sidebar('admin')}"></div>
+
+    <main class="admin-main">
+		<header class="admin-header">
+		    <div>
+		        <h1>ユーザー編集</h1>
+		        <p class="login-user">
+		            ログイン中：
+		            <span th:text="${displayName}">ユーザー名</span>
+		        </p>
+		    </div>
+		</header>
+
+        <div class="message success" th:if="${successMessage != null}" th:text="${successMessage}"></div>
+        <div class="message error" th:if="${errors != null}">
+            <ul>
+                <li th:each="error : ${errors}" th:text="${error}">エラー</li>
+            </ul>
+        </div>
+
+        <section class="form-card">
+            <form th:action="@{/admin/users/{id}(id=${form.userId})}" th:object="${form}" method="post">
+
+                <input type="hidden" th:field="*{userId}">
+
+                <div class="form-row">
+                    <label><span class="required">*</span>社員番号</label>
+                    <input type="text" th:field="*{employeeId}" readonly>
+                </div>
+
+                <div class="form-row">
+                    <label><span class="required">*</span>姓</label>
+                    <input type="text" th:field="*{lastName}">
+                </div>
+
+                <div class="form-row">
+                    <label><span class="required">*</span>名</label>
+                    <input type="text" th:field="*{firstName}">
+                </div>
+
+                <div class="form-row">
+                    <label><span class="required">*</span>姓カナ</label>
+                    <input type="text" th:field="*{lastNameKana}">
+                </div>
+
+                <div class="form-row">
+                    <label><span class="required">*</span>名カナ</label>
+                    <input type="text" th:field="*{firstNameKana}">
+                </div>
+
+                <div class="form-row">
+                    <label><span class="required">*</span>生年月日</label>
+                    <input type="date" th:field="*{birthDate}">
+                </div>
+
+				<div class="form-row">
+				    <label><span class="required">*</span>ログインID</label>
+				    <input type="text" th:field="*{loginId}">
+				</div>
+
+				<div class="form-row">
+				    <label><span class="required">*</span>パスワード</label>
+				    <div class="input-help-wrap">
+				        <input type="text" th:field="*{password}" autocomplete="new-password">
+				        <p class="help-text">ログイン時に使用するパスワードです。変更する場合は値を書き換えてください。</p>
+				    </div>
+				</div>
+
+                <div class="form-row">
+                    <label><span class="required">*</span>メールアドレス</label>
+                    <input type="email" th:field="*{email}">
+                </div>
+
+                <div class="form-row">
+                    <label><span class="required">*</span>性別</label>
+                    <div class="radio-group">
+                        <label class="option-label" th:each="gender : ${genders}">
+                            <input type="radio" th:field="*{genderId}" th:value="${gender.genderId}">
+                            <span th:text="${gender.genderName}">男</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <label><span class="required">*</span>部署</label>
+                    <select th:field="*{departmentId}">
+                        <option value="">選択してください</option>
+                        <option th:each="department : ${departments}"
+                                th:value="${department.departmentId}"
+                                th:text="${department.departmentName}">開発部</option>
+                    </select>
+                </div>
+
+                <div class="form-row">
+                    <label><span class="required">*</span>雇用区分</label>
+                    <select th:field="*{employmentTypeId}">
+                        <option value="">選択してください</option>
+                        <option th:each="employmentType : ${employmentTypes}"
+                                th:value="${employmentType.employmentTypeId}"
+                                th:text="${employmentType.employmentTypeName}">正社員</option>
+                    </select>
+                </div>
+
+                <div class="form-row">
+                    <label><span class="required">*</span>入社日</label>
+                    <input type="date" th:field="*{hireDate}">
+                </div>
+
+                <div class="form-row">
+                    <label>退職日</label>
+                    <input type="date" th:field="*{retireDate}">
+                </div>
+
+                <div class="form-row align-start">
+                    <label><span class="required">*</span>権限</label>
+                    <div class="checkbox-group">
+                        <label class="option-label" th:each="role : ${roles}">
+                            <input type="checkbox" th:field="*{roleIds}" th:value="${role.roleId}">
+                            <span th:text="${role.roleName}">一般ユーザー</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="button-row">
+                    <button type="submit" class="primary-button">更新</button>
+                    <button type="submit"
+                            class="danger-button"
+                            th:formaction="@{/admin/users/{id}/retire(id=${form.userId})}"
+                            onclick="return confirm('このユーザーを退職処理します。\n退職処理後、このユーザーはログインできなくなり、ユーザー一覧に表示されなくなります。\nよろしいですか？');">
+                        退職処理
+                    </button>
+                    <a class="gray-button" th:href="@{/admin/users}">戻る</a>
+                </div>
+            </form>
+        </section>
+    </main>
+</div>
+</body>
+</html>

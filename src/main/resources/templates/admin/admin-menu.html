@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="ja" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>管理者メニュー</title>
+    <link rel="stylesheet" th:href="@{/css/admin-menu.css}">
+    <link rel="stylesheet" th:href="@{/css/common-sidebar.css}">
+</head>
+<body>
+
+<div class="layout">
+
+    <!-- 共通サイドバー -->
+    <div th:replace="~{fragments/sidebar :: sidebar('admin')}"></div>
+
+    <!-- メイン -->
+    <main class="main-content">
+
+        <header class="page-header">
+            <div>
+                <h1>管理者メニュー</h1>
+                <p class="login-user">
+                    ログイン中：
+                    <span th:text="${displayName}">ユーザー名</span>
+                </p>
+            </div>
+        </header>
+
+        <section class="menu-grid">
+
+            <a class="menu-card menu-card-link" th:href="@{/admin/users}">
+                <h2>ユーザー管理</h2>
+                <p>ユーザー一覧、新規登録、編集、退職処理、権限設定を行います。</p>
+                <div class="card-footer">
+                    <span class="status-label ready">利用可能</span>
+                </div>
+            </a>
+
+            <div class="menu-card disabled">
+                <h2>部署管理</h2>
+                <p>部署マスタの管理を行います。</p>
+                <div class="card-footer">
+                    <span class="status-label later">将来対応</span>
+                </div>
+            </div>
+
+            <div class="menu-card disabled">
+                <h2>雇用区分管理</h2>
+                <p>正社員、契約社員、パートなどの雇用区分を管理します。</p>
+                <div class="card-footer">
+                    <span class="status-label later">将来対応</span>
+                </div>
+            </div>
+
+            <div class="menu-card disabled">
+                <h2>勤務パターン管理</h2>
+                <p>通常勤務、早番、短時間勤務などの勤務パターンを管理します。</p>
+                <div class="card-footer">
+                    <span class="status-label later">将来対応</span>
+                </div>
+            </div>
+
+            <div class="menu-card disabled">
+                <h2>休日マスタ管理</h2>
+                <p>祝日や会社休日を管理します。</p>
+                <div class="card-footer">
+                    <span class="status-label later">将来対応</span>
+                </div>
+            </div>
+
+        </section>
+
+    </main>
+
+</div>
+
+</body>
+</html>

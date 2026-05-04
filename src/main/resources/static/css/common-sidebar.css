@@ -1,0 +1,62 @@
+/* 共通サイドバー
+   全画面で管理者画面と同じサイドバーに統一する */
+
+.sidebar {
+    width: 150px;
+    min-width: 150px;
+    min-height: 100vh;
+    background-color: #263238;
+    color: #fff;
+    padding: 24px 16px;
+    flex-shrink: 0;
+    box-sizing: border-box;
+
+    /* ログアウトを最下部に配置するための設定 */
+    display: flex;
+    flex-direction: column;
+}
+
+.sidebar-title {
+    font-size: 20px;
+    font-weight: bold;
+    margin-bottom: 32px;
+    color: #fff;
+    text-align: left;
+}
+
+.sidebar-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    align-items: stretch;
+
+    /* サイドバー内の残り高さを使う */
+    flex: 1;
+}
+
+.sidebar-link {
+    display: block;
+    padding: 12px 14px;
+    color: #cfd8dc;
+    text-decoration: none;
+    border-radius: 6px;
+    font-size: 15px;
+    line-height: 1.4;
+    transition: background-color 0.2s;
+}
+
+.sidebar-link:hover {
+    background-color: #37474f;
+    color: #fff;
+}
+
+.sidebar-link.active {
+    background-color: #1976d2;
+    color: #fff;
+}
+
+/* ログアウトだけサイドバー最下部に配置 */
+.sidebar-link.logout {
+    margin-top: auto;
+    color: #ffcdd2;
+}
