@@ -81,7 +81,9 @@
 				<div class="form-row">
 				    <label><span class="required">*</span>パスワード</label>
 				    <div class="input-help-wrap">
-				        <input type="text" th:field="*{password}" autocomplete="new-password">
+						<input type="password"
+						       th:field="*{password}"
+						       autocomplete="new-password">
 				        <p class="help-text">ログイン時に使用するパスワードです。変更する場合は値を書き換えてください。</p>
 				    </div>
 				</div>
@@ -174,5 +176,6 @@
         });
     });
 </script>
+<script th:src="@{/js/password-toggle.js}"></script>
 </body>
 </html>

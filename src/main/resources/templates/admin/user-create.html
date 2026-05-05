@@ -78,7 +78,11 @@
 
                 <div class="form-row">
                     <label><span class="required">*</span>パスワード</label>
-                    <input type="text" th:field="*{password}" id="password" placeholder="初期パスワードは生年月日から自動入力">
+					<input type="password"
+					       th:field="*{password}"
+					       id="password"
+					       placeholder="初期パスワードは生年月日から自動入力"
+					       autocomplete="new-password">
                 </div>
 
                 <div class="form-row">
@@ -177,5 +181,6 @@
         });
     });
 </script>
+<script th:src="@{/js/password-toggle.js}"></script>
 </body>
 </html>

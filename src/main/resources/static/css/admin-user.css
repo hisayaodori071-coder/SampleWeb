@@ -294,6 +294,7 @@ body {
 }
 
 input[type="text"],
+input[type="password"],
 input[type="email"],
 input[type="date"],
 select {
@@ -382,6 +383,7 @@ input[readonly] {
        }
 
        input[type="text"],
+	   input[type="password"],
        input[type="email"],
        input[type="date"],
        select {

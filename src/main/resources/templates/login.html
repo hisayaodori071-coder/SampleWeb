@@ -15,11 +15,14 @@
 </div>
 <div>
 	<label>パスワード</label>
-	<input type="password"th:field="*{password}">
+	<input type="password"
+	       th:field="*{password}"
+	       autocomplete="current-password">
 </div>
 <div>
 	<input type="submit" value="ログイン">
 </div>
 </form>
+<script th:src="@{/js/password-toggle.js}"></script>
 </body>
 </html>
